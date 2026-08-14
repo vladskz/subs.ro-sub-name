@@ -15,6 +15,22 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 7000;
 
+// English language names + flags per ISO 639-2 code.
+// The name is prepended to `lang` so stricter clients (e.g. Nuvio) can still
+// normalize it back to a valid language code, while Stremio displays the raw
+// text (including the format tag).
+const LANGUAGE_LABELS = {
+  ron: { name: "Romanian", flag: "🇷🇴" },
+  eng: { name: "English", flag: "🇬🇧" },
+  ita: { name: "Italian", flag: "🇮🇹" },
+  fra: { name: "French", flag: "🇫🇷" },
+  deu: { name: "German", flag: "🇩🇪" },
+  hun: { name: "Hungarian", flag: "🇭🇺" },
+  ell: { name: "Greek", flag: "🇬🇷" },
+  por: { name: "Portuguese", flag: "🇵🇹" },
+  spa: { name: "Spanish", flag: "🇪🇸" },
+};
+
 app.use(
   helmet({
     contentSecurityPolicy: false,
@@ -144,18 +160,20 @@ app.get("/:config?/subtitles/:type/:id/:extra?.json", async (req, res) => {
             shortFormat = "HDTV";
         }
 
-        let formatCuSteag = `🇷🇴 ${shortFormat}`;
-        console.log(`  🔎 [Subtitrarea ${index + 1}] -> Format: ${formatCuSteag}`);
+        const langInfo = LANGUAGE_LABELS[sub.lang] || { name: sub.lang || "Subtitle", flag: "" };
+        const langLabel = [langInfo.name, langInfo.flag, shortFormat]
+          .filter(Boolean)
+          .join(" ");
+        console.log(`  🔎 [Subtitrarea ${index + 1}] -> Format: ${shortFormat} | Lang: ${langLabel}`);
         
         return {
           id: sub.id,
           url: sub.url,
-          // `lang` must be a valid ISO 639-2 code (e.g. "ron", "eng").
-          // Stricter clients such as Nuvio drop subtitles with invalid
-          // language codes, so keep the real code here and move the pretty
-          // label to `title`.
-          lang: sub.lang,
-          title: formatCuSteag + "\nSubs.ro Subtitles"
+          // `lang` contains the language name (normalizable by Nuvio) plus the
+          // format tag (shown as raw text by Stremio). This keeps both clients
+          // happy while preserving the format labels.
+          lang: langLabel,
+          title: langLabel + "\nSubs.ro Subtitles"
         };
       });
     }
