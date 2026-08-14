@@ -559,6 +559,7 @@
           btnChecking: "...",
           btnValid: "Valid! ✓",
           btnInvalid: "Invalid ✕",
+          btnNetworkError: "Eroare rețea ✕",
           supportMsg: "Îți place addon-ul? Susține proiectul.",
           donateBtn: "Susține pe Revolut",
           switchLang: "EN",
@@ -580,6 +581,7 @@
           btnChecking: "...",
           btnValid: "Valid! ✓",
           btnInvalid: "Invalid ✕",
+          btnNetworkError: "Network error ✕",
           supportMsg: "Enjoying the addon? Support the project.",
           donateBtn: "Support on Revolut",
           switchLang: "RO",
@@ -703,7 +705,7 @@
         btn.disabled = true; // Prevent double clicks
         
         try {
-          const res = await fetch(`/api/validate/${apiKey}`);
+          const res = await fetch(`/api/validate/${encodeURIComponent(apiKey)}`);
           const data = await res.json();
           
           if (data.valid) {
@@ -714,7 +716,7 @@
             isValidated = true;
             document.getElementById('installBtn').disabled = false;
           } else {
-            btn.innerText = t.btnInvalid;
+            btn.innerText = data.reason === "invalid_key" ? t.btnInvalid : t.btnNetworkError;
             btn.className = "action-btn validate-btn state-invalid";
             btn.disabled = false;
             

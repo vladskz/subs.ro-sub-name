@@ -67,8 +67,11 @@ app.get("/:config/manifest.json", manifestHandler);
 app.get("/api/validate/:apiKey", async (req, res) => {
   const { apiKey } = req.params;
   const client = new SubsRoClient(apiKey);
-  const isValid = await client.validate();
-  res.json({ valid: isValid });
+  const result = await client.validate();
+  console.log(
+    `[VALIDATE] ${result.valid ? "OK" : "FAILED (reason: " + result.reason + ")"} for key ...${apiKey.slice(-6)}`,
+  );
+  res.json({ valid: result.valid, reason: result.reason });
 });
 
 app.get("/:config?/subtitles/:type/:id/:extra?.json", async (req, res) => {
@@ -142,13 +145,17 @@ app.get("/:config?/subtitles/:type/:id/:extra?.json", async (req, res) => {
         }
 
         let formatCuSteag = `🇷🇴 ${shortFormat}`;
-        console.log(`  🔎 [Subtitrarea ${index + 1}] -> Meniu Stanga: ${formatCuSteag}`);
+        console.log(`  🔎 [Subtitrarea ${index + 1}] -> Format: ${formatCuSteag}`);
         
         return {
           id: sub.id,
           url: sub.url,
-          lang: formatCuSteag, // Le grupeaza frumos pe stanga, cu steag, fix ca in poza ta!
-          title: formatCuSteag + "\nSubs.ro Subtitles" // Le afiseaza elegant si pe dreapta
+          // `lang` must be a valid ISO 639-2 code (e.g. "ron", "eng").
+          // Stricter clients such as Nuvio drop subtitles with invalid
+          // language codes, so keep the real code here and move the pretty
+          // label to `title`.
+          lang: sub.lang,
+          title: formatCuSteag + "\nSubs.ro Subtitles"
         };
       });
     }
@@ -161,32 +168,39 @@ app.get("/:config?/subtitles/:type/:id/:extra?.json", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  const networkInterfaces = os.networkInterfaces();
-  let localIp = '127.0.0.1';
-  
-  for (const interfaceName in networkInterfaces) {
-    // Ignoram placile de retea virtuale (Docker, vEthernet, VPN)
-    if (interfaceName.toLowerCase().includes('veth') || interfaceName.toLowerCase().includes('docker')) continue;
-    
-    for (const iface of networkInterfaces[interfaceName]) {
-      if (iface.family === 'IPv4' && !iface.internal) {
-        // Prioritizam adresele standard de router din casa
-        if (iface.address.startsWith('192.168.')) {
-            localIp = iface.address;
-        } else if (localIp === '127.0.0.1') {
-            localIp = iface.address; // Fallback
+// Only start a long-lived HTTP server when running directly (local development).
+// On serverless platforms (e.g. Vercel), the Express app is exported and mounted
+// as a function handler instead.
+if (require.main === module) {
+  app.listen(PORT, () => {
+    const networkInterfaces = os.networkInterfaces();
+    let localIp = '127.0.0.1';
+
+    for (const interfaceName in networkInterfaces) {
+      // Ignoram placile de retea virtuale (Docker, vEthernet, VPN)
+      if (interfaceName.toLowerCase().includes('veth') || interfaceName.toLowerCase().includes('docker')) continue;
+
+      for (const iface of networkInterfaces[interfaceName]) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          // Prioritizam adresele standard de router din casa
+          if (iface.address.startsWith('192.168.')) {
+              localIp = iface.address;
+          } else if (localIp === '127.0.0.1') {
+              localIp = iface.address; // Fallback
+          }
         }
       }
     }
-  }
 
-  console.log(`🚀 Addon live pe portul ${PORT}`);
-  console.log(`[INFO] DESIGN PREMIUM ACTIVAT - Categorii cu steag 🇷🇴 pe stanga.`);
-  console.log(`\n======================================================`);
-  console.log(`🌐 PENTRU TV / TELEFON (Baza linkului tau local):`);
-  console.log(`➡️  http://${localIp}:${PORT}`);
-  console.log(`\n💻 PENTRU PC (Baza linkului tau local):`);
-  console.log(`➡️  http://127.0.0.1:${PORT}`);
-  console.log(`======================================================\n`);
-});
+    console.log(`🚀 Addon live pe portul ${PORT}`);
+    console.log(`[INFO] Format cu steag 🇷🇴 afisat in titlul subtitrarii.`);
+    console.log(`\n======================================================`);
+    console.log(`🌐 PENTRU TV / TELEFON (Baza linkului tau local):`);
+    console.log(`➡️  http://${localIp}:${PORT}`);
+    console.log(`\n💻 PENTRU PC (Baza linkului tau local):`);
+    console.log(`➡️  http://127.0.0.1:${PORT}`);
+    console.log(`======================================================\n`);
+  });
+}
+
+module.exports = app;

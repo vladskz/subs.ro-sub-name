@@ -36,6 +36,14 @@ git clone https://github.com/allecsc/stremio-subs-ro.git
 cd stremio-subs-ro && npm install && npm start
 ```
 
+### ▲ Hosting gratuit pe Vercel
+
+1. Push acest repository pe GitHub.
+2. În [Vercel](https://vercel.com): **Add New → Project**, importă repository-ul.
+3. La *Framework Preset* alege **Other** (nu există pas de build).
+4. Apasă **Deploy**. Apoi folosește ca link de instalare:
+   `https://numele-proiectului-tau.vercel.app/configure.html`
+
 ## ☕ Susține
 
 Dacă ți se pare util acest addon, poți să-mi [oferi o cafea pe Revolut](https://revolut.me/altcelalalt)!
@@ -72,6 +80,14 @@ A Stremio addon that fetches high-quality subtitles from [subs.ro](https://subs.
 git clone https://github.com/allecsc/stremio-subs-ro.git
 cd stremio-subs-ro && npm install && npm start
 ```
+
+### ▲ Free Vercel Hosting
+
+1. Push this repository to GitHub.
+2. In [Vercel](https://vercel.com): **Add New → Project**, import the repository.
+3. Set *Framework Preset* to **Other** (there is no build step).
+4. Click **Deploy**. Then use this as your install link:
+   `https://your-project-name.vercel.app/configure.html`
 
 ## ☕ Support
 
